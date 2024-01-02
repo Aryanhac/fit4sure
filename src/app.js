@@ -28,9 +28,7 @@ const user=require('../src/Router/User');
 
 app.use('/api',user);
 
-// app.get('*',(req,res)=>{
-//     res.sendFile(path.join(__dirname,'../build/index.html'));
-// })
+
 
 //Error middleware
 app.use(errorMiddleware);

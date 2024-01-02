@@ -1,115 +1,125 @@
-const ErrorHandling =require('../../utils/Errorhandling');
+const ErrorHandling = require('../../utils/Errorhandling');
 const catchAsyncError = require('../../middleware/catchAsyncError');
-const User=require('../Model/User');
-const sendToken=require('../../utils/SendToken');
-const SendMail = require('../../utils/SendMail');
-const cloudinary =require('cloudinary');
+const User = require('../Model/User');
+const sendToken = require('../../utils/SendToken');
+const cloudinary = require('cloudinary');
+const twilio = require('twilio');
+const generateOTP = require('../../utils/Otp');
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioClient = twilio(accountSid, authToken);
+
 
 //Register a User
-const userRegister=catchAsyncError(async (req,res,next)=>{
-    const {name,email,password}=req.body;
-    const d=new Date();
-    const createdAt=d.toDateString();
+const getOTP = catchAsyncError(async (req, res, next) => {
+    const d = new Date();
+    const phoneNumber = req.body.phoneNumber;
+    const randomNumber = generateOTP();
     
-    const mycloud=await cloudinary.v2.uploader.upload(req.body.avatar,{
-        folder:"Avatars",
-        width:"150",
-        crop:"scale"
+    const user = await User.findOne({phoneNumber:phoneNumber});
+
+    const message = `Hello from Fit4Sure! Your verification code is: ${randomNumber}`;
+
+    const response = await twilioClient.messages.create({
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: "+91"+phoneNumber,
+        body: message,
     });
-    const  user=await User.create({
-        name,
-        email,
-        password,
-        avatar:{
-            public_id:mycloud.public_id,
-            url:mycloud.secure_url
-        },
-        createdAt
-    });
-    sendToken(user,res,200);
-});
-// log In
-const signIn=catchAsyncError(async (req,res,next)=>{
-    const {email,password}=req.body;
-    // email and password both should be present
-    if(!email || !password){
-        return next(new ErrorHandling(400,'Please Enter Email or Password'));
-    }
-    const user = await User.findOne({email}).select('+password');
+
     if(!user){
-        return next(new ErrorHandling(401,'Invalid Email or Password'));
+      await User.create({
+        phoneNumber,
+        otp: {
+            value: randomNumber,
+            createdAt:+d.getTime()
+        },
+        createdAt:d
+      });
+    }else{
+        user.otp={
+            value:randomNumber,
+            createdAt:d.getTime()
+        }
+        await user.save();
     }
-    const isCorrectPassword= await user.isCorrectPassword(password);
-    if(!isCorrectPassword){
-        return next(new ErrorHandling(401,'Invalid Email or Password'));
-    };
-    sendToken(user,res,200);
+
+    res.status(200).send({
+        success: true
+    });
+});
+
+//Otp Verification
+const otpVerification = catchAsyncError(async (req, res, next) => {
+    const {phoneNumber, otp} = req.body;
+    const d = new Date();
+
+    const user = await User.findOne({phoneNumber:phoneNumber});
+
+    if(!user){
+        return next(new ErrorHandling(400, "user not found"));
+    }
+    console.log(user);
+    if(user.otp.value===otp && ((d.getTime()-user.otp.createdAt)/(1000*60*60*24))<1){
+       user.otp.createdAt = user.otp.createdAt-1000*60*60*24;
+       await user.save();
+       sendToken(user,res,200);
+    }else{
+        return res.status(400).json({ message: `The phone number and the OTP code doesn't match or OTP has expired.` });
+    }
 })
 
+
 //logged Out
-const logOut=catchAsyncError((req,res,next)=>{
-    res.cookie("token",null,{
-        httpOnly:true,
-        expires:new Date(Date.now())
+const logOut = catchAsyncError((req, res, next) => {
+    res.cookie("token", null, {
+        httpOnly: true,
+        expires: new Date(Date.now())
     })
     res.json({
-        success:true,
-        message:"Successfully logged Out"
+        success: true,
+        message: "Successfully logged Out"
     })
 })
 
 //Get Profile
-const getProfile=catchAsyncError(async(req,res,next)=>{
-    const user=await User.findById(req.user.id);
+const getProfile = catchAsyncError(async (req, res, next) => {
+    const user = await User.findById(req.user.id);
     res.status(200).json({
-        success:true,
+        success: true,
         user
     })
 });
 
-//Update Password
-const updatePassword=catchAsyncError(async (req,res,next)=>{
-    const user=await User.findById(req.user.id).select("+password");
-    const isPasswordCorrect= user.isCorrectPassword(req.body.oldPassword);
-    if(!isPasswordCorrect){
-        return next(new ErrorHandling(400,"Old Password is wrong"));
-    }
-    if(req.body.newPassword !== req.body.confirmPassword){
-        return next(new ErrorHandling(400,"new Password and confirm Password are not matching"));
-    }
-    user.password=req.body.newPassword;
-    await user.save();
-    sendToken(user,res,200);
-});
 
 //update Profile
-const updateProfile=catchAsyncError(async (req,res,next)=>{
-    const userdata={
-        name:req.body.name,
-        email:req.body.email
+const updateProfile = catchAsyncError(async (req, res, next) => {
+    const userdata = {
+        gender:req.body.gender
+    };
+    console.log(req.body);
+
+    if (req.body.avatar) {
+        const user = await User.findById(req.user.id);
+        await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+        const mycloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+            folder: "Avatars",
+            width: "150",
+            crop: "scale"
+        });
+        userdata.avatar = {
+            public_id: mycloud.public_id,
+            url: mycloud.secure_url
+        }
     };
 
-    if(req.body.avatar!==""){
-        const user=await User.findById(req.user.id);
-        await cloudinary.v2.uploader.destroy(user.avatar.public_id);
-        const mycloud=await cloudinary.v2.uploader.upload(req.body.avatar,{
-            folder:"Avatars",
-            width:"150",
-            crop:"scale"
-        });
-        userdata.avatar={
-            public_id:mycloud.public_id,
-            url:mycloud.secure_url
-        }
-        };
-    
-    const user=await User.findByIdAndUpdate(req.user.id,userdata,{
-        new:true,
-        runValidators:true,
-        useFindAndModify:true
+    const user = await User.findByIdAndUpdate(req.user.id, userdata, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: true
     });
     res.status(200).json({
-        success:true,
+        success: true,
         user
     })
 
@@ -120,52 +130,52 @@ const updateProfile=catchAsyncError(async (req,res,next)=>{
 // ---admin
 
 //getAllUsers
-const getAllUsers=catchAsyncError(async(req,res,next)=>{
-    const users= await User.find();
+const getAllUsers = catchAsyncError(async (req, res, next) => {
+    const users = await User.find();
     res.status(200).json({
-        success:true,
+        success: true,
         users
     })
 });
 //getSingleUser
-const getSingleUser=catchAsyncError(async(req,res,next)=>{
-    const user=await User.findById(req.params.id);
-    if(!user){
-        return next(new ErrorHandling(400,"User not found"));
+const getSingleUser = catchAsyncError(async (req, res, next) => {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+        return next(new ErrorHandling(400, "User not found"));
     }
     res.status(200).json({
-        success:true,
+        success: true,
         user
     })
 });
 //updateUserRole
-const updateUserRole=catchAsyncError(async(req,res,next)=>{
-    const userdata={
-        name:req.body.name,
-        email:req.body.email,
-        role:req.body.role
+const updateUserRole = catchAsyncError(async (req, res, next) => {
+    const userdata = {
+        name: req.body.name,
+        email: req.body.email,
+        role: req.body.role
     };
-    const user=await User.findByIdAndUpdate(req.params.id,userdata,{
-        new:true,
-        runValidators:true,
-        useFindAndModify:true
+    const user = await User.findByIdAndUpdate(req.params.id, userdata, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: true
     });
     res.status(200).json({
-        success:true,
+        success: true,
         user
     })
 });
 //deleteUser
-const deleteUser=catchAsyncError(async (req,res,next)=>{
-    const user=await User.findById(req.params.id);
-    if(!user){
-        return next(new ErrorHandling(400,"User not found"));
+const deleteUser = catchAsyncError(async (req, res, next) => {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+        return next(new ErrorHandling(400, "User not found"));
     }
     await cloudinary.v2.uploader.destroy(user.avatar.public_id);
     await user.remove();
     res.status(200).json({
-        success:true,
-        message:"Deleted successfully"
+        success: true,
+        message: "Deleted successfully"
     })
 });
-module.exports={userRegister,signIn,logOut,forgotPassword,resetPassword,getProfile,updatePassword,updateProfile,getAllUsers,getSingleUser,deleteUser,updateUserRole};
+module.exports = { getOTP, logOut, getProfile, updateProfile, getAllUsers, getSingleUser, deleteUser, updateUserRole, otpVerification };

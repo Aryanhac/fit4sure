@@ -10,19 +10,10 @@ module.exports=(err,req,res,next)=>{
 
     // when Register with duplicate email
     if(err.code===11000){
-        const message="duplicate email error";
+        const message="duplicate mobile error";
         err=new ErrorHandling(400,message);
     }
-    // when wrong JWT token
-    if(err.name==="JWTWebTokenError"){
-        const message="Token is invalid";
-        err=new ErrorHandling(400,message);
-    }
-    //when JWT Token expired
-    if(err.name==="TokenExpiredError"){
-        const message="Token has Expired";
-        err=new ErrorHandling(400,message);
-    }
+    
     //when image size is big
     if(err.message==="Could not decode base64"){
         const message="Image size should be less than 500kb";
