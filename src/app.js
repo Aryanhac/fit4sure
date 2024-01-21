@@ -25,8 +25,16 @@ app.use(express.static(path.join(__dirname,'../build/')));
 
 //Router
 const user=require('../src/Router/User');
+const blog=require('../src/Router/Blog');
+const payment=require('../src/Router/Payment');
+const trainer = require('../src/Router/Trainer');
+const consultancy = require('../src/Router/Consultancy');
 
 app.use('/api',user);
+// app.use('/api',blog);
+app.use('/api',payment);
+app.use('/api',trainer);
+app.use('/api',consultancy);
 
 
 
