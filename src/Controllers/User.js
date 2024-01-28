@@ -16,30 +16,23 @@ const getOTP = catchAsyncError(async (req, res, next) => {
     const d = new Date();
     const phoneNumber = req.body.phoneNumber;
     const randomNumber = generateOTP();
-    
-    const user = await User.findOne({phoneNumber:phoneNumber});
 
-    const message = `Hello from Fit4Sure! Your verification code is: ${randomNumber}`;
+    const user = await User.findOne({ phoneNumber: phoneNumber });
 
-    const response = await twilioClient.messages.create({
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: "+91"+phoneNumber,
-        body: message,
-    });
+    if (!user) {
+       return next(new ErrorHandling(400, "user not found"));
+    } else {
+        const message = `Hello from Fit4Sure! Your verification code is: ${randomNumber}`;
 
-    if(!user){
-      await User.create({
-        phoneNumber,
-        otp: {
+        const response = await twilioClient.messages.create({
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: "+91" + phoneNumber,
+            body: message,
+        });
+
+        user.otp = {
             value: randomNumber,
-            createdAt:+d.getTime()
-        },
-        createdAt:d
-      });
-    }else{
-        user.otp={
-            value:randomNumber,
-            createdAt:d.getTime()
+            createdAt: d.getTime()
         }
         await user.save();
     }
@@ -51,20 +44,20 @@ const getOTP = catchAsyncError(async (req, res, next) => {
 
 //Otp Verification
 const otpVerification = catchAsyncError(async (req, res, next) => {
-    const {phoneNumber, otp} = req.body;
+    const { phoneNumber, otp } = req.body;
     const d = new Date();
 
-    const user = await User.findOne({phoneNumber:phoneNumber});
+    const user = await User.findOne({ phoneNumber: phoneNumber });
 
-    if(!user){
+    if (!user) {
         return next(new ErrorHandling(400, "user not found"));
     }
     console.log(user);
-    if(user.otp.value===otp && ((d.getTime()-user.otp.createdAt)/(1000*60*60*24))<1){
-       user.otp.createdAt = user.otp.createdAt-1000*60*60*24;
-       await user.save();
-       sendToken(user,res,200);
-    }else{
+    if (user.otp.value === otp && ((d.getTime() - user.otp.createdAt) / (1000 * 60 * 60 * 24)) < 1) {
+        user.otp.createdAt = user.otp.createdAt - 1000 * 60 * 60 * 24;
+        await user.save();
+        sendToken(user, res, 200);
+    } else {
         return res.status(400).json({ message: `The phone number and the OTP code doesn't match or OTP has expired.` });
     }
 })
@@ -95,7 +88,7 @@ const getProfile = catchAsyncError(async (req, res, next) => {
 //update Profile
 const updateProfile = catchAsyncError(async (req, res, next) => {
     const userdata = {
-        gender:req.body.gender
+        gender: req.body.gender
     };
     console.log(req.body);
 

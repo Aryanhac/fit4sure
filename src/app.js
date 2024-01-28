@@ -17,11 +17,11 @@ if(process.env.NODE_ENV!=='Production'){
 app.use(cors({
     origin: '*',
     credentials: true }));
-app.use(bodyParser.urlencoded({extended:true,limit:"100kb"}));
-app.use(fileupload());
-app.use(express.json({limit:"100kb"}));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname,'../build/')));
+    app.use(express.json({ limit: "500kb" }));
+    app.use(bodyParser.urlencoded({ extended: true, limit: "500kb" }));
+    app.use(fileupload());
+    app.use(cookieParser());
+    // app.use(express.static(path.join(__dirname,'../build/')));
 
 //Router
 const user=require('../src/Router/User');

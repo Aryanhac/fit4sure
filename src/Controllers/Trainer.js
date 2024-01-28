@@ -1,6 +1,7 @@
 const ErrorHandling = require('../../utils/Errorhandling');
 const catchAsyncError = require('../../middleware/catchAsyncError');
 const Trainer = require('../Model/Trainer');
+const cloudinary = require('cloudinary');
 
 // GET all trainers
 const getTrainers = catchAsyncError(async (req, res, next) => {
@@ -23,38 +24,84 @@ const getTrainer = catchAsyncError(async (req, res, next) => {
 
 // POST a new trainer
 const addTrainer = catchAsyncError(async (req, res, next) => {
-    const newTrainer = req.body;
-    const createdTrainer = await Trainer.create(newTrainer);
-    res.status(201).json(createdTrainer);
+    console.log(req.files);
+    const aadharCard = req.body.aadharCard;
+    const panCard = req.body.panCard;
+    const imageLinks = {};
+
+   
+    // uploading trainer AadharCard
+    const aadharCloud = await cloudinary.v2.uploader.upload(aadharCard, {
+        folder: "TrainerAadharCard",
+    });
+    imageLinks['aadhar']=aadharCloud.secure_url;
+
+    // uploading trainer pancard
+    const panCloud = await cloudinary.v2.uploader.upload(panCard, {
+        folder: "TrainerPanCard",
+    });
+    imageLinks['pan']=panCloud.secure_url;
+
+    const { name, gender, age, yoe, contactNumber, email, accountDetails} = req.body;
+
+     // Create a new Trainer instance with the data
+     const newTrainer = new Trainer({
+        name,
+        gender,
+        age,
+        yoe,
+        contactNumber,
+        email,
+        aadharcard: imageLinks['aadhar'],
+        pancard: imageLinks['pan'],
+        accountDetails,
+      });
+  
+      // Save the new trainer to the database
+      await newTrainer.save();
+  
+      res.status(200).json({ newTrainer});
 })
 
 // PUT/update a trainer by ID
 const updateTrainer = catchAsyncError(async (req, res, next) => {
     const trainerId = req.params.id;
-    const updatedTrainer = req.body;
+    const existingTrainer = await Trainer.findById(trainerId);
 
-    const trainer = await Trainer.findByIdAndUpdate(trainerId, updatedTrainer, { new: true });
-
-    if (!trainer) {
+    if (!existingTrainer) {
         return next(new ErrorHandling(400, "Trainer not found"));
     }
 
-    res.status(200).json({ trainer });
-})
+    const { name, gender, age, yoe, contactNumber, email, accountDetails } = req.body;
 
-const assignTrainer = catchAsyncError(async (req, res, next) => {
-    const { clientId, trainerId } = req.body;
-    const trainer = await Trainer.findById(trainerId);
-    const client = await Client.findByIdAndUpdate(clientId, { assignedTrainer: trainerId }, { new: true });
-
-    if (!trainer || !client) {
-        return next(new ErrorHandling(400, "Trainer or Client not found"));
+    if(req.body.aadhar){
+        const aadharCard = req.body.aadharCard;
+        const aadharCloud = await cloudinary.v2.uploader.upload(aadharCard, {
+            folder: "TrainerAadharCard",
+        });
+        existingTrainer.aadhar = aadharCloud.secure_url;
+    }
+    
+    if(req.body.pancard){
+        const panCard = req.body.panCard;
+        const panCloud = await cloudinary.v2.uploader.upload(panCard, {
+            folder: "TrainerPanCard",
+        });
+        existingTrainer.pancard = panCloud.secure_url;
     }
 
-    trainer.clients.push(client._id);
-    await trainer.save();
+    existingTrainer.name = name;
+    existingTrainer.gender = gender;
+    existingTrainer.age = age;
+    existingTrainer.yoe = yoe;
+    existingTrainer.contactNumber = contactNumber;
+    existingTrainer.email = email;
+    existingTrainer.accountDetails = accountDetails;
 
-    res.status(201).json({ success: true });
+    // Save the updated trainer data
+    await existingTrainer.save();
+
+    res.status(200).json({ existingTrainer });
 })
 
 // DELETE endpoint to remove a trainer by ID
@@ -70,5 +117,40 @@ const deleteTrainer = catchAsyncError(async (req, res, next) => {
 
 })
 
+// update Availability of trainer by ID
+const updateTrainerAvailability = catchAsyncError(async (req, res, next) => {
+    const trainerId = req.params.id;
 
-module.exports = { getTrainers, getTrainer, addTrainer, updateTrainer, assignTrainer, deleteTrainer };
+    const updatedTrainer = await Trainer.findByIdAndUpdate(
+        trainerId,
+        { $set: { availability: req.body.availability } },
+        { new: true } // Return the updated document
+      );
+
+    if (updatedTrainer) {
+        res.json({ success: true, message: 'Trainer deleted successfully' });
+    } else {
+        return next(new ErrorHandling(400, "Trainer not found"));
+    }
+})
+
+
+
+// assing Trainer to client
+const assignTrainer = catchAsyncError(async (req, res, next) => {
+    const { clientId, trainerId } = req.body;
+    const trainer = await Trainer.findById(trainerId);
+    const client = await Client.findByIdAndUpdate(clientId, { assignedTrainer: trainerId }, { new: true });
+
+    if (!trainer || !client) {
+        return next(new ErrorHandling(400, "Trainer or Client not found"));
+    }
+
+    trainer.clients.push(client._id);
+    await trainer.save();
+
+    res.status(201).json({ success: true });
+})
+
+
+module.exports = { getTrainers, getTrainer, addTrainer, updateTrainer, assignTrainer, updateTrainerAvailability, deleteTrainer };
