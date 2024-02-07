@@ -24,7 +24,7 @@ const getTrainer = catchAsyncError(async (req, res, next) => {
 
 // POST a new trainer
 const addTrainer = catchAsyncError(async (req, res, next) => {
-    console.log(req.files);
+    console.log(req.body);
     const aadharCard = req.body.aadharCard;
     const panCard = req.body.panCard;
     const imageLinks = {};
@@ -42,10 +42,10 @@ const addTrainer = catchAsyncError(async (req, res, next) => {
     });
     imageLinks['pan']=panCloud.secure_url;
 
-    const { name, gender, age, yoe, contactNumber, email, accountDetails} = req.body;
+    const { name, gender, age, yoe, contactNumber, email, accountDetails, specialties} = req.body;
 
      // Create a new Trainer instance with the data
-     const newTrainer = new Trainer({
+     const newTrainer =  await Trainer.create({
         name,
         gender,
         age,
@@ -55,10 +55,9 @@ const addTrainer = catchAsyncError(async (req, res, next) => {
         aadharcard: imageLinks['aadhar'],
         pancard: imageLinks['pan'],
         accountDetails,
+        specialties
       });
-  
-      // Save the new trainer to the database
-      await newTrainer.save();
+      console.log(newTrainer)
   
       res.status(200).json({ newTrainer});
 })

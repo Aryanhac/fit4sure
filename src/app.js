@@ -15,7 +15,7 @@ if(process.env.NODE_ENV!=='Production'){
 
 //middleware
 app.use(cors({
-    origin: '*',
+    origin: 'http://localhost:3000',
     credentials: true }));
     app.use(express.json({ limit: "500kb" }));
     app.use(bodyParser.urlencoded({ extended: true, limit: "500kb" }));

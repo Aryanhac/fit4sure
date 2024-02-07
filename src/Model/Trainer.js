@@ -7,7 +7,6 @@ const TrainerSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other'],
         required: true
     },
     age: {
@@ -26,6 +25,10 @@ const TrainerSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
+    },
+    specialties: {
+        type: [String], // An array of strings
+        required: true
     },
     aadharcard: {
         type: String, // Assuming aadharcard is a cloudinary image URL
