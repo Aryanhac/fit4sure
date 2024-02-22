@@ -52,7 +52,6 @@ const otpVerification = catchAsyncError(async (req, res, next) => {
     if (!user) {
         return next(new ErrorHandling(400, "user not found"));
     }
-    console.log(user);
     if (user.otp.value === otp && ((d.getTime() - user.otp.createdAt) / (1000 * 60 * 60 * 24)) < 1) {
         user.otp.createdAt = user.otp.createdAt - 1000 * 60 * 60 * 24;
         await user.save();
@@ -80,7 +79,6 @@ const getProfile = catchAsyncError(async (req, res, next) => {
     const user = await User.findById(req.user.id);
     res.status(200).json({
         success: true,
-        user
     })
 });
 
@@ -90,7 +88,6 @@ const updateProfile = catchAsyncError(async (req, res, next) => {
     const userdata = {
         gender: req.body.gender
     };
-    console.log(req.body);
 
     if (req.body.avatar) {
         const user = await User.findById(req.user.id);

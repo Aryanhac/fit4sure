@@ -24,7 +24,6 @@ const getTrainer = catchAsyncError(async (req, res, next) => {
 
 // POST a new trainer
 const addTrainer = catchAsyncError(async (req, res, next) => {
-    console.log(req.body);
     const aadharCard = req.body.aadharCard;
     const panCard = req.body.panCard;
     const imageLinks = {};
@@ -57,7 +56,6 @@ const addTrainer = catchAsyncError(async (req, res, next) => {
         accountDetails,
         specialties
       });
-      console.log(newTrainer)
   
       res.status(200).json({ newTrainer});
 })
@@ -71,17 +69,17 @@ const updateTrainer = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHandling(400, "Trainer not found"));
     }
 
-    const { name, gender, age, yoe, contactNumber, email, accountDetails } = req.body;
+    const { name, gender, age, yoe, contactNumber, email, accountDetails, availability, specialties } = req.body;
 
-    if(req.body.aadhar){
+    if(req.body.aadharCard){
         const aadharCard = req.body.aadharCard;
         const aadharCloud = await cloudinary.v2.uploader.upload(aadharCard, {
             folder: "TrainerAadharCard",
         });
-        existingTrainer.aadhar = aadharCloud.secure_url;
+        existingTrainer.aadharcard = aadharCloud.secure_url;
     }
     
-    if(req.body.pancard){
+    if(req.body.panCard){
         const panCard = req.body.panCard;
         const panCloud = await cloudinary.v2.uploader.upload(panCard, {
             folder: "TrainerPanCard",
@@ -96,7 +94,9 @@ const updateTrainer = catchAsyncError(async (req, res, next) => {
     existingTrainer.contactNumber = contactNumber;
     existingTrainer.email = email;
     existingTrainer.accountDetails = accountDetails;
-
+    existingTrainer.availability = availability;
+    existingTrainer.specialties = specialties;
+    
     // Save the updated trainer data
     await existingTrainer.save();
 

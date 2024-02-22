@@ -1,12 +1,12 @@
 const Express=require('express');
 const {isAuthentication,isAuthorizeRole}=require('../../middleware/authentication');
 const app=Express.Router();
-const {newBlog,getAllBlog,getSpecificBlog,updateSpecificBlog,deleteSpecificBlog} = require('../Controllers/Blog');
+const {addBlog,getBlogs,getBlog,updateBlog,deleteBlog} = require('../Controllers/Blog');
 
-app.post('/addNewBlog',isAuthentication,isAuthorizeRole('admin'),newBlog);
-app.post('/updateBlog/:id',isAuthentication,isAuthorizeRole('admin'),updateSpecificBlog);
-app.get('/getAllBlogs',getAllBlog);
-app.get('/getSpecificBlog/:id',getSpecificBlog);
-app.delete('/deleteSpecificBlog',isAuthentication,isAuthorizeRole('admin'),deleteSpecificBlog);
+app.post('/addBlog',isAuthentication,isAuthorizeRole('admin'),addBlog);
+app.put('/updateBlog/:id',isAuthentication,isAuthorizeRole('admin'),updateBlog);
+app.get('/getBlogs',getBlogs);
+app.post('/getBlog/:id',getBlog);
+app.post('/deleteBlog/:id',isAuthentication,isAuthorizeRole('admin'),deleteBlog);
 
 module.exports=app;

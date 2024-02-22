@@ -1,31 +1,23 @@
 const mongoose = require('mongoose');
 
-// Define the schema for the blog post
+// Define the article schema
 const blogSchema = new mongoose.Schema({
-  title: { 
-    type: String,
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  tags: [{
-    type: String
-  }] 
+  title: { type: String, required: true },
+  items:[{
+  title: { type: String, required: true },
+  author: { type: String, required: true },
+  date: { type: String, required: true },
+  outsideimage: { type: String, required: true },
+  innerimage: { type: String, required: true },
+  category: { type: String, required: true },
+  categoryContent: { type: String, required: true },
+  para: { type: String, required: true },
+  }
+  ]
 });
 
-// Create a Blog model using the schema
-const Blog = mongoose.model('Blog', blogSchema);
 
-// Export the model for use in other files
-module.exports = Blog;
+// Define the main model
+const Blog = mongoose.model('blogSchema', blogSchema);
+
+module.exports = Blog
