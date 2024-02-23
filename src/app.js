@@ -15,7 +15,7 @@ if(process.env.NODE_ENV!=='Production'){
 
 //middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://fit4sure.in:3000',
     credentials: true }));
     
     app.use(express.json({ limit: "50mb" }));
