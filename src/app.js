@@ -15,7 +15,7 @@ if(process.env.NODE_ENV!=='Production'){
 
 //middleware
 app.use(cors({
-    origin: 'https://fit4sure.in',
+    origin: 'http://localhost:3000',
     credentials: true }));
     
     app.use(express.json({ limit: "50mb" }));
@@ -33,7 +33,8 @@ const blog=require('../src/Router/Blog');
 const payment=require('../src/Router/Payment');
 const trainer = require('../src/Router/Trainer');
 const consultancy = require('../src/Router/Consultancy');
-const plan = require('../src/Router/Plan')
+const plan = require('../src/Router/Plan');
+const client = require('../src/Router/Client')
 
 app.use('/api',user);
 app.use('/api',blog);
@@ -41,6 +42,7 @@ app.use('/api',payment);
 app.use('/api',trainer);
 app.use('/api',consultancy);
 app.use('/api',plan);
+app.use('/api',client);
 
 app.get('*',(req,res)=>{
     res.sendFile(path.join(__dirname,'../build/index.html'));

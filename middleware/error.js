@@ -7,7 +7,6 @@ module.exports=(err,req,res,next)=>{
         const message='Resource not found';
         err=new ErrorHandling(400,message);
     }
-
     // when Register with duplicate email
     if(err.code===11000){
         const message="duplicate mobile error";

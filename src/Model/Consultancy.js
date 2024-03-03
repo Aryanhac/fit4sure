@@ -10,6 +10,10 @@ const consultancyFormSchema = new mongoose.Schema({
     gender: String,
     goal: String,
     isNew: { type: Boolean, default: true },
+    createdAt: {
+        type: String,
+        default: Date.now
+    }
 });
 
 module.exports=mongoose.model("Consultancy",consultancyFormSchema);

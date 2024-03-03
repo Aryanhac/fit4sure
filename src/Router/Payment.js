@@ -1,10 +1,9 @@
 const Express=require('express');
-const {isAuthentication,isAuthorizeRole}=require('../../middleware/authentication');
 const app=Express.Router();
+const {newPayment, checkStatus} = require('../Controllers/Payment');
 
-const {checkout} = require('../Controllers/Payment');
-
-app.post('/checkout',checkout);
+app.post('/newPayment',newPayment);
+app.post('/checkStatus/:txnId',checkStatus);
 
 
 module.exports=app;
