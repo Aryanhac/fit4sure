@@ -113,7 +113,7 @@ const checkStatus = catchAsyncError(async (req, res, next) => {
             );
             
 
-            return res.status(200).send({ success: true, message: "Payment Success" });
+            return  res.redirect('http://localhost:3000/thankyou');
         } else {
             return res.status(400).send({ success: false, message: "Payment Failure" });
         }
