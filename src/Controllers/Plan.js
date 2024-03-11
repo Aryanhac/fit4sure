@@ -37,7 +37,7 @@ const updatePlan = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHandling(400, "Plan not found"));
     }
 
-    const { title, color, description, price, note, button, options, strikePrice } = req.body;
+    const { title, color, description, price, note, button, options, strikePrice, month } = req.body;
 
     existingPlan.title = title;
     existingPlan.color = color;
@@ -47,6 +47,7 @@ const updatePlan = catchAsyncError(async (req, res, next) => {
     existingPlan.button = button;
     existingPlan.options = options;
     existingPlan.strikePrice = strikePrice;
+    existingPlan.month = month;
     
     // Save the updated Plan data
     await existingPlan.save();

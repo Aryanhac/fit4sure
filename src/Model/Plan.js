@@ -33,6 +33,10 @@ const planSchema = new mongoose.Schema({
     type: [Boolean],
     required: true,
   },
+  month: {
+    type: Number,
+    required: true,
+  },
 });
 
 const Plan = mongoose.model('Plan', planSchema);

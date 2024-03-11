@@ -22,6 +22,14 @@ const clientSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  weight: {
+    type: Number,
+    required: true
+  },
+  state: {
+    type: String,
+    required: true
+  },
   city:{
     type: String, 
     required: true
@@ -45,6 +53,14 @@ const clientSchema = new mongoose.Schema({
         required: true
       },
       merchantTransactionId:{
+        type: String,
+        required: true
+      },
+      acceptPolicy:{
+        type: String,
+        required: true
+      },
+      hearPlace: {
         type: String,
         required: true
       },

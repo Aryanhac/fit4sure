@@ -7,11 +7,12 @@ const Client = require('../Model/Client');
 
 const newPayment = catchAsyncError(async (req, res, next) => {
     const merchantTransactionId = 'M' + Date.now();
-    const { price, phone, name, type, email, country, city, gender, age } = req.body;
+    const { price, phone, name, type, email, country, city, gender, age, hearPlace, state, weight, acceptPolicy } = req.body;
     let user = await Client.findOne({ phone });
-    
+   
     if (!user) {
         // If user not found, create a new user
+        
         user = await Client.create({
             name,
             phone,
@@ -20,13 +21,19 @@ const newPayment = catchAsyncError(async (req, res, next) => {
             country,
             city,
             gender,
+            weight,
+            state,
             paymentHistory: {
                 price,
                 type,
                 status: "filled form",
-                merchantTransactionId
+                merchantTransactionId,
+                acceptPolicy,
+                hearPlace
             }
         });
+       
+        
     } else {
         user.paymentHistory.push({
             price,
